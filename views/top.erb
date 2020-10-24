@@ -1,11 +1,15 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <mata charset="utf-8">
-    <title>メモアプリ</title>
-  </mata>
-<body>
-<h1>メモアプリ</h1>
+<ul class="list-group">
+  <h2>メモ一覧</h2>
 
-</body>
-</html>
+  <% @memos.each_with_index do |memo, index| %>
+    <li class="list-group-item ">
+      <a href="/memo/<%= memo['id'] %>">
+        <%= memo['title'] %>
+      </a>
+    </li>
+  <% end %>
+
+</ul>
+<div>
+  <a class="btn btn-outline-secondary btn-block" href="/new">追加</a>
+</div>

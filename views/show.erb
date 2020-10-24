@@ -1,10 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <mata charset="utf-8">
-    <title>メモアプリ</title>
-  </mata>
-<body>
-<h1>メモアプリ</h1>
-<p>詳細</p></body>
-</html>
+<div class="card">
+  <h3 class="card-header"><%= @title %></h3>
+  <div class="card-body">
+    <p class="card-text"><%= @content %></p>
+  </div>
+</div>
+
+<form method="GET" action="/memo/edit/<%= params[:id] %>">
+  <div>
+    <button type="submit" class="btn btn-outline-secondary btn-block">変更</button>
+  </div>
+</form>
+
+<form method="POST" action="/memo/delete/<%= params[:id] %>">
+  <div>
+    <input type="hidden" name="_method" value="DELETE">
+    <button type="submit" class="btn btn-outline-secondary btn-block">削除</button>
+  </div>
+</form>
+</div>

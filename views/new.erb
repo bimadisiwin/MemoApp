@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <mata charset="utf-8">
-    <title>メモアプリ</title>
-  </mata>
-<body>
-<h1>メモアプリ</h1>
-<p>新規投稿</p></body>
-</html>
+<h2>新規メモ</h2>
+
+<form method="post" action="/new">
+  <div class="form-group">
+    <label>タイトル</label>
+    <input type="text" class="form-control" name="title">
+  </div>
+
+  <div class="form-group">
+    <label>内容</label>
+    <textarea class="form-control" rows="3" name="content"></textarea>
+  </div>
+
+  <div class="form-group">
+    <button type="submit" class="btn btn-outline-secondary btn-block">保存</button>
+  </div>
+</form>
+
+<form action="/" method="get">
+  <div class="form-group">
+    <button type="submit" class="btn btn-outline-secondary btn-block">キャンセル</button>
+  </div>
+</form>
