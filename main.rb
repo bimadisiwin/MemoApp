@@ -6,9 +6,6 @@ require 'json'
 require 'securerandom'
 require 'pg'
 
-# データベースに接続する
-connection = PG::connect(host: "localhost", user: "memouser", dbname: "memoapp")
-
 json_file_path = 'memos/memo.json'
 
 json_data = open(json_file_path) { |io| JSON.load(io) }
@@ -16,14 +13,12 @@ json_data = open(json_file_path) { |io| JSON.load(io) }
 memos = json_data['memos']
 
 get '/' do
+  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+
   begin
-    results = connection.exec("SELECT * FROM memos;")
-    results.each do |r|
-      p r
-      @memos = memos
-    end
+    memos = connection.exec('SELECT * FROM memos;')
+    @memos = memos
   ensure
-    # データベースへのコネクションを切断する
     connection.finish
   end
   erb :top
@@ -34,22 +29,29 @@ get '/new' do
 end
 
 get '/memo/:id' do
-  memos.each do |memo|
-    if memo['id'].to_s == params[:id].to_s
-      @title = memo['title'].to_s
-      @content = memo['content']
+  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+  begin
+    memos = connection.exec('SELECT * FROM memos;')
+    memos.each do |memo|
+      if memo['id'] == params[:id]
+        @title = memo['title']
+        @content = memo['content']
+      end
     end
+  ensure
+    connection.finish
   end
   erb :show
 end
 
 post '/new' do
-  id = SecureRandom.uuid
-  new_memo = {'id' => id.to_s, 'title' => params[:title], 'content' => params[:content]}
-  memos.push(new_memo)
-
-  File.open(json_file_path, 'w') do |file|
-    JSON.dump(json_data, file)
+  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+  title = params[:title]
+  content = params[:content]
+  begin
+    connection.exec("INSERT INTO memos(title, content) VALUES ('#{title}', '#{content}');")
+  ensure
+    connection.finish
   end
   redirect '/'
   erb :top
@@ -58,33 +60,32 @@ end
 get '/memo/edit/:id' do
   memos.each do |memo|
     if memo['id'].to_s == params[:id].to_s
-      @title = memo['title'].to_s
+      @title = memo['title']
       @content = memo['content']
     end
   end
   erb :edit
 end
 
-patch '/memo/edit/:id' do
-  memos.each do |memo|
-    if memo['id'].to_s == params[:id].to_s
-      memo['title'] = params[:title]
-      memo['content'] = params[:content]
-    end
-  end
-  File.open(json_file_path, 'w') do |file|
-    JSON.dump(json_data, file)
+patch '/memo/edit/:id' do |id|
+  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+  title = params[:title]
+  content = params[:content]
+  begin
+    connection.exec("UPDATE memos SET title = '#{title}', content = '#{content}' WHERE id = '#{id}';")
+  ensure
+    connection.finish
   end
   redirect '/'
   erb :top
 end
 
-delete '/memo/delete/:id' do
-  memos.each do |memo|
-    memos.delete(memo) if memo['id'].to_s == params[:id].to_s
-  end
-  File.open(json_file_path, 'w') do |file|
-    JSON.dump(json_data, file)
+delete '/memo/delete/:id' do |id|
+  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+  begin
+    connection.exec("DELETE FROM Memos WHERE id = '#{id}';")
+  ensure
+    connection.finish
   end
   redirect '/'
   erb :top
