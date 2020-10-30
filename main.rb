@@ -45,8 +45,8 @@ end
 
 post '/memo' do
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  title = h(params[:title])
-  content = h(params[:content])
+  title = params[:title]
+  content = params[:content]
   begin
     connection.exec("INSERT INTO memos(title, content) VALUES ('#{title}', '#{content}');")
   ensure
@@ -74,8 +74,8 @@ end
 
 patch '/memo/:id' do |id|
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  title = h(params[:title])
-  content = h(params[:content])
+  title = params[:title]
+  content = params[:content]
   begin
     connection.exec("UPDATE memos SET title = '#{title}', content = '#{content}' WHERE id = '#{id}';")
   ensure

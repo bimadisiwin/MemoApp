@@ -3,7 +3,7 @@
   <div class="form-group">
     <label>タイトル</label>
     <textarea type="text" class="form-control" rows="1" name="title">
-      <%= @title %>
+      <%= h @title %>
     </textarea>
 
   </div>
@@ -11,7 +11,7 @@
   <div class="form-group">
     <label>内容</label>
     <textarea class="form-control" rows="3" name="content">
-      <%= @content %>
+      <%= h @content %>
     </textarea>
   </div>
 
