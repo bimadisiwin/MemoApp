@@ -6,11 +6,22 @@ require 'json'
 require 'securerandom'
 require 'pg'
 
-json_file_path = 'memos/memo.json'
+JSON_FILE_PATH = 'memos/memo.json'
+@@json_data = open(JSON_FILE_PATH) { |io| JSON.load(io) }
+memos = @@json_data['memos']
 
-json_data = open(json_file_path) { |io| JSON.load(io) }
+def write_json
+  File.open(JSON_FILE_PATH, 'w') do |file|
+    # p file
+    JSON.dump(@@json_data, file)
+  end
+end
 
-memos = json_data['memos']
+helpers do
+  def h(text)
+    Rack::Utils.escape_html(text)
+  end
+end
 
 get '/' do
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
