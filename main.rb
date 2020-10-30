@@ -2,7 +2,6 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'securerandom'
 require 'pg'
 
 helpers do
@@ -13,7 +12,6 @@ end
 
 get '/' do
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-
   begin
     memos = connection.exec('SELECT * FROM memos;')
     @memos = memos
