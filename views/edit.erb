@@ -1,8 +1,7 @@
 <h2>メモ編集</h2>
-<form method="post" action="/memo/edit/<%= params[:id] %>">
+<form method="post" action="/memo/<%= params[:id] %>">
   <div class="form-group">
     <label>タイトル</label>
-    <!--    <input type="text" class="form-control" name="title">-->
     <textarea type="text" class="form-control" rows="1" name="title">
       <%= @title %>
     </textarea>

@@ -2,15 +2,14 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'json'
 require 'securerandom'
 require 'pg'
 
-json_file_path = 'memos/memo.json'
-
-json_data = open(json_file_path) { |io| JSON.load(io) }
-
-memos = json_data['memos']
+helpers do
+  def h(text)
+    Rack::Utils.escape_html(text)
+  end
+end
 
 get '/' do
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
@@ -28,12 +27,12 @@ get '/new' do
   erb :new
 end
 
-get '/memo/:id' do
+get '/memo/:id' do |id|
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
   begin
     memos = connection.exec('SELECT * FROM memos;')
     memos.each do |memo|
-      if memo['id'] == params[:id]
+      if memo['id'] == id
         @title = memo['title']
         @content = memo['content']
       end
@@ -44,10 +43,10 @@ get '/memo/:id' do
   erb :show
 end
 
-post '/new' do
+post '/memo' do
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  title = params[:title]
-  content = params[:content]
+  title = h(params[:title])
+  content = h(params[:content])
   begin
     connection.exec("INSERT INTO memos(title, content) VALUES ('#{title}', '#{content}');")
   ensure
@@ -57,20 +56,26 @@ post '/new' do
   erb :top
 end
 
-get '/memo/edit/:id' do
-  memos.each do |memo|
-    if memo['id'].to_s == params[:id].to_s
-      @title = memo['title']
-      @content = memo['content']
+get '/memo/:id/edit' do |id|
+  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+  begin
+    memos = connection.exec('SELECT * FROM memos;')
+    memos.each do |memo|
+      if memo['id'] == id
+        @title = memo['title']
+        @content = memo['content']
+      end
     end
+  ensure
+    connection.finish
   end
   erb :edit
 end
 
-patch '/memo/edit/:id' do |id|
+patch '/memo/:id' do |id|
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  title = params[:title]
-  content = params[:content]
+  title = h(params[:title])
+  content = h(params[:content])
   begin
     connection.exec("UPDATE memos SET title = '#{title}', content = '#{content}' WHERE id = '#{id}';")
   ensure
@@ -80,7 +85,7 @@ patch '/memo/edit/:id' do |id|
   erb :top
 end
 
-delete '/memo/delete/:id' do |id|
+delete '/memo/:id' do |id|
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
   begin
     connection.exec("DELETE FROM Memos WHERE id = '#{id}';")
