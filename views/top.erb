@@ -4,7 +4,7 @@
   <% @memos.each_with_index do |memo, index| %>
     <li class="list-group-item ">
       <a href="/memo/<%= memo['id'] %>">
-        <%= memo['title'] %>
+        <%= h memo['title'] %>
       </a>
     </li>
   <% end %>

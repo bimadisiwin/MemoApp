@@ -6,13 +6,13 @@ require 'json'
 require 'securerandom'
 
 JSON_FILE_PATH = 'memos/memo.json'
-@@json_data = open(JSON_FILE_PATH) { |io| JSON.load(io) }
-memos = @@json_data['memos']
+json_data = open(JSON_FILE_PATH) { |io| JSON.load(io) }
+memos = json_data['memos']
 
-def write_json
+def write_json(json_data)
   File.open(JSON_FILE_PATH, 'w') do |file|
     # p file
-    JSON.dump(@@json_data, file)
+    JSON.dump(json_data, file)
   end
 end
 
@@ -40,9 +40,9 @@ end
 
 post '/memo' do
   id = SecureRandom.uuid
-  new_memo = { 'id' => id.to_s, 'title' => h(params[:title]).to_s, 'content' => h(params[:content]).to_s }
+  new_memo = { 'id' => id.to_s, 'title' => params[:title], 'content' => params[:content] }
   memos.push(new_memo)
-  write_json
+  write_json(json_data)
   redirect '/'
   erb :top
 end
@@ -56,9 +56,9 @@ end
 
 patch '/memo/:id' do |id|
   target_memo = memos.find { |memo| memo['id'] == id }
-  target_memo['title'] = h(params[:title]).to_s
-  target_memo['content'] = h(params[:content]).to_s
-  write_json
+  target_memo['title'] = params[:title]
+  target_memo['content'] = params[:content]
+  write_json(json_data)
   redirect '/'
   erb :top
 end
@@ -66,7 +66,7 @@ end
 delete '/memo/:id' do |id|
   target_memo = memos.find { |memo| memo['id'] == id }
   memos.delete(target_memo)
-  write_json
+  write_json(json_data)
   redirect '/'
   erb :top
 end
