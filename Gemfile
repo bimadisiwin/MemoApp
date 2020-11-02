@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
+gem 'dotenv'
 gem 'pg'
 gem 'sinatra'
 gem 'sinatra-contrib'
-gem 'dotenv'
