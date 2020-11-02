@@ -10,14 +10,19 @@ helpers do
   end
 end
 
-get '/' do
+def connect_db(sql)
   connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
   begin
-    memos = connection.exec('SELECT * FROM memos;')
-    @memos = memos
+    result = connection.exec(sql)
   ensure
     connection.finish
   end
+  result
+end
+
+get '/' do
+  memos = connect_db('SELECT * FROM memos;')
+  @memos = memos
   erb :top
 end
 
@@ -26,70 +31,40 @@ get '/new' do
 end
 
 get '/memo/:id' do |id|
-  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  begin
-    memos = connection.exec('SELECT * FROM memos;')
-    memos.each do |memo|
-      if memo['id'] == id
-        @title = memo['title']
-        @content = memo['content']
-      end
-    end
-  ensure
-    connection.finish
-  end
+  memo = connect_db("SELECT * FROM memos WHERE id = '#{id}';")
+  @title = memo[0]["title"]
+  @content = memo[0]["content"]
   erb :show
 end
 
 post '/memo' do
-  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
   title = params[:title]
   content = params[:content]
-  begin
-    connection.exec("INSERT INTO memos(title, content) VALUES ('#{title}', '#{content}');")
-  ensure
-    connection.finish
-  end
+  sql = "INSERT INTO memos(title, content) VALUES ('#{title}', '#{content}');"
+  connect_db(sql)
   redirect '/'
   erb :top
 end
 
 get '/memo/:id/edit' do |id|
-  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  begin
-    memos = connection.exec('SELECT * FROM memos;')
-    memos.each do |memo|
-      if memo['id'] == id
-        @title = memo['title']
-        @content = memo['content']
-      end
-    end
-  ensure
-    connection.finish
-  end
+  memo = connect_db("SELECT * FROM memos WHERE id = '#{id}';")
+  @title = memo[0]["title"]
+  @content = memo[0]["content"]
   erb :edit
 end
 
 patch '/memo/:id' do |id|
-  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
   title = params[:title]
   content = params[:content]
-  begin
-    connection.exec("UPDATE memos SET title = '#{title}', content = '#{content}' WHERE id = '#{id}';")
-  ensure
-    connection.finish
-  end
+  sql = "UPDATE memos SET title = '#{title}', content = '#{content}' WHERE id = '#{id}';"
+  connect_db(sql)
   redirect '/'
   erb :top
 end
 
 delete '/memo/:id' do |id|
-  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
-  begin
-    connection.exec("DELETE FROM Memos WHERE id = '#{id}';")
-  ensure
-    connection.finish
-  end
+  sql = "DELETE FROM Memos WHERE id = '#{id}';"
+  connect_db(sql)
   redirect '/'
   erb :top
 end
