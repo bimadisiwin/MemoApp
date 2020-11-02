@@ -11,22 +11,14 @@ helpers do
   end
 end
 
-def connect_db(sql)
-  connection = PG::connect(
-      host: ENV["DB_HOST"],
-      user: ENV["DB_USER"],
-      dbname: ENV["DB_NAME"]
-  )
-  begin
-    result = connection.exec(sql)
-  ensure
-    connection.finish
-  end
-  result
-end
+connection = PG::connect(
+    host: ENV["DB_HOST"],
+    user: ENV["DB_USER"],
+    dbname: ENV["DB_NAME"]
+)
 
 get '/' do
-  memos = connect_db('SELECT * FROM memos;')
+  memos = connection.exec('SELECT * FROM memos;')
   @memos = memos
   erb :top
 end
@@ -36,7 +28,7 @@ get '/new' do
 end
 
 get '/memo/:id' do |id|
-  memo = connect_db("SELECT * FROM memos WHERE id = '#{id}';")
+  memo = connection.exec_params("SELECT * FROM memos WHERE id=$1;", [id])
   @title = memo[0]["title"]
   @content = memo[0]["content"]
   erb :show
@@ -45,14 +37,13 @@ end
 post '/memo' do
   title = params[:title]
   content = params[:content]
-  sql = "INSERT INTO memos(title, content) VALUES ('#{title}', '#{content}');"
-  connect_db(sql)
+  connection.exec_params("INSERT INTO memos(title, content) VALUES ($1, $2);", [title, content])
   redirect '/'
   erb :top
 end
 
 get '/memo/:id/edit' do |id|
-  memo = connect_db("SELECT * FROM memos WHERE id = '#{id}';")
+  memo = connection.exec_params("SELECT * FROM memos WHERE id=$1;", [id])
   @title = memo[0]["title"]
   @content = memo[0]["content"]
   erb :edit
@@ -61,15 +52,13 @@ end
 patch '/memo/:id' do |id|
   title = params[:title]
   content = params[:content]
-  sql = "UPDATE memos SET title = '#{title}', content = '#{content}' WHERE id = '#{id}';"
-  connect_db(sql)
+  connection.exec_params("UPDATE memos SET title = $1, content = $2 WHERE id = $3;", [title, content, id])
   redirect '/'
   erb :top
 end
 
 delete '/memo/:id' do |id|
-  sql = "DELETE FROM Memos WHERE id = '#{id}';"
-  connect_db(sql)
+  connection.exec_params("DELETE FROM Memos WHERE id=$1;", [id])
   redirect '/'
   erb :top
 end
