@@ -3,6 +3,7 @@
 require 'sinatra'
 require 'sinatra/reloader'
 require 'pg'
+require 'dotenv/load'
 
 helpers do
   def h(text)
@@ -11,7 +12,11 @@ helpers do
 end
 
 def connect_db(sql)
-  connection = PG.connect(host: 'localhost', user: 'memouser', dbname: 'memoapp')
+  connection = PG::connect(
+      host: ENV["DB_HOST"],
+      user: ENV["DB_USER"],
+      dbname: ENV["DB_NAME"]
+  )
   begin
     result = connection.exec(sql)
   ensure
