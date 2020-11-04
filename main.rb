@@ -2,19 +2,8 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'json'
-require 'securerandom'
-
-JSON_FILE_PATH = 'memos/memo.json'
-json_data = open(JSON_FILE_PATH) { |io| JSON.load(io) }
-memos = json_data['memos']
-
-def write_json(json_data)
-  File.open(JSON_FILE_PATH, 'w') do |file|
-    # p file
-    JSON.dump(json_data, file)
-  end
-end
+require 'pg'
+require 'dotenv/load'
 
 helpers do
   def h(text)
@@ -22,8 +11,29 @@ helpers do
   end
 end
 
+not_found do
+  '404 Not Found.'
+end
+
+def connect_db
+  connection = PG.connect(
+    host: ENV['DB_HOST'],
+    user: ENV['DB_USER'],
+    dbname: ENV['DB_NAME']
+  )
+  begin
+    yield(connection) if block_given?
+  ensure
+    connection.finish
+  end
+end
+
 get '/' do
-  @memos = memos
+  connect_db do |connection|
+    memos = connection.exec('SELECT * FROM memos;')
+    @memos = memos
+  end
+
   erb :top
 end
 
@@ -32,41 +42,56 @@ get '/new' do
 end
 
 get '/memo/:id' do |id|
-  target_memo = memos.find { |memo| memo['id'] == id }
-  @title = target_memo['title']
-  @content = target_memo['content']
+  connect_db do |connection|
+    memo = connection.exec_params('SELECT * FROM memos WHERE id=$1;', [id])
+    if memo.cmd_tuples != 0
+      @title = memo[0]['title']
+      @content = memo[0]['content']
+    else
+      not_found
+    end
+  end
   erb :show
 end
 
 post '/memo' do
-  id = SecureRandom.uuid
-  new_memo = { 'id' => id.to_s, 'title' => params[:title], 'content' => params[:content] }
-  memos.push(new_memo)
-  write_json(json_data)
+  title = params[:title]
+  content = params[:content]
+  connect_db do |connection|
+    connection.exec_params('INSERT INTO memos(title, content) VALUES ($1, $2);', [title, content])
+  end
   redirect '/'
   erb :top
 end
 
 get '/memo/:id/edit' do |id|
-  target_memo = memos.find { |memo| memo['id'] == id }
-  @title = target_memo['title']
-  @content = target_memo['content']
-  erb :edit
+  connect_db do |connection|
+    memo = connection.exec_params('SELECT * FROM memos WHERE id=$1;', [id])
+    if memo.cmd_tuples != 0
+      @title = memo[0]['title']
+      @content = memo[0]['content']
+    else
+      not_found
+    end
+    erb :edit
+  end
 end
 
 patch '/memo/:id' do |id|
-  target_memo = memos.find { |memo| memo['id'] == id }
-  target_memo['title'] = params[:title]
-  target_memo['content'] = params[:content]
-  write_json(json_data)
+  title = params[:title]
+  content = params[:content]
+  connect_db do |connection|
+    connection.exec_params('UPDATE memos SET title = $1, content = $2 WHERE id = $3;', [title, content, id])
+  end
   redirect '/'
   erb :top
 end
 
 delete '/memo/:id' do |id|
-  target_memo = memos.find { |memo| memo['id'] == id }
-  memos.delete(target_memo)
-  write_json(json_data)
+  connect_db do |connection|
+    memo = connection.exec_params('DELETE FROM Memos WHERE id=$1;', [id])
+    not_found if memo.cmd_tuples.zero?
+  end
   redirect '/'
   erb :top
 end
