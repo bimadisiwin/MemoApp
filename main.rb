@@ -42,14 +42,14 @@ get '/new' do
 end
 
 get '/memo/:id' do |id|
-  begin
-    connect_db do |connection|
-      memo = connection.exec_params('SELECT * FROM memos WHERE id=$1;', [id])
+  connect_db do |connection|
+    memo = connection.exec_params('SELECT * FROM memos WHERE id=$1;', [id])
+    if memo.cmd_tuples != 0
       @title = memo[0]['title']
       @content = memo[0]['content']
+    else
+      not_found
     end
-  rescue StandardError
-    not_found
   end
   erb :show
 end
@@ -65,16 +65,16 @@ post '/memo' do
 end
 
 get '/memo/:id/edit' do |id|
-  begin
-    connect_db do |connection|
-      memo = connection.exec_params('SELECT * FROM memos WHERE id=$1;', [id])
+  connect_db do |connection|
+    memo = connection.exec_params('SELECT * FROM memos WHERE id=$1;', [id])
+    if memo.cmd_tuples != 0
       @title = memo[0]['title']
       @content = memo[0]['content']
+    else
+      not_found
     end
-  rescue StandardError
-    not_found
+    erb :edit
   end
-  erb :edit
 end
 
 patch '/memo/:id' do |id|
@@ -88,12 +88,9 @@ patch '/memo/:id' do |id|
 end
 
 delete '/memo/:id' do |id|
-  begin
-    connect_db do |connection|
-      connection.exec_params('DELETE FROM Memos WHERE id=$1;', [id])
-    end
-  rescue StandardError
-    not_found
+  connect_db do |connection|
+    memo = connection.exec_params('DELETE FROM Memos WHERE id=$1;', [id])
+    not_found if memo.cmd_tuples.zero?
   end
   redirect '/'
   erb :top
